@@ -34,10 +34,6 @@ namespace CrmToJira {
 			if (isEqual == false) { return false; }
 			isEqual = (GetIssueType() == issue.fields.GetIssueType());
 			if (isEqual == false) { return false; }
-			/*  isEqual = (GetPartType() == issue.fields.GetPartType());
-				if (isEqual == false) { return false; }
-				isEqual = (GetSystemPart() == issue.fields.GetSystemPart());
-				if (isEqual == false) { return false; }  */
 			isEqual = (GetProbePart() == issue.fields.GetProbePart());
 			if (isEqual == false) { return false; }
 			isEqual = (GetProbeSymptom() == issue.fields.GetProbeSymptom());
@@ -329,6 +325,12 @@ namespace CrmToJira {
 			customfield_11520.id = "15304";
 		}
 
+		// Sets the patient harm field to "No"
+		public void SetPatientHarmToNo() {
+			customfield_13021 = new Customfield13021();
+			customfield_13021.id = "22512";
+		}
+
 		public string GetProbeType() {
 			try {
 				return customfield_10079.value;
@@ -404,6 +406,15 @@ namespace CrmToJira {
 		public void SetProbeRevision(string value) {
 			customfield_10080 = new Customfield10080();
 			customfield_10080.value = value;
+		}
+
+		public string GetWhenIssueOcurred() {
+			return customfield_13020.value;		
+		}
+
+		public void SetWhenIssueOcurred(string value) {
+			customfield_13020 = new Customfield13020();
+			customfield_13020.value = value;
 		}
 
 		public double GetUseCount() {
@@ -496,6 +507,8 @@ namespace CrmToJira {
 		public Priority priority { get; set; }
 		public object customfield_10420 { get; set; }
 		public object customfield_10421 { get; set; }
+        public Customfield13021 customfield_13021 { get; set; } // Patient harm
+        public Customfield13020 customfield_13020 { get; set; } // When was issue detected (before/after surgery)
 		public string customfield_10620 { get; set; }
 		public List<object> labels { get; set; }
 		public object customfield_11821 { get; set; }
@@ -692,6 +705,24 @@ namespace CrmToJira {
 		public bool active { get; set; }
 		public string timeZone { get; set; }
 	}
+
+	// When was detected (before/after surgery)
+    public class Customfield13020
+    {
+        public string self { get; set; }
+        public string value { get; set; }
+        public string id { get; set; }
+        public bool disabled { get; set; }
+    }
+
+	// Harm to patient or operator
+    public class Customfield13021
+    {
+        public string self { get; set; }
+        public string value { get; set; }
+        public string id { get; set; }
+        public bool disabled { get; set; }
+    }
 
 	public class StatusCategory {
 		public string self { get; set; }

@@ -469,6 +469,12 @@ namespace CrmToJira {
 			try {
 				issue.fields.SetAssignee(credentials.Username);
 				issue.fields.SetSummary(e.Attributes["msus_name"].ToString());
+				
+				// Set the patient harm to no by default
+				issue.fields.SetPatientHarmToNo();
+
+				// Debugging - Stipulate when the issue was detected.
+				issue.fields.SetWhenIssueOcurred("Before surgery");
 
 				if (e.Attributes.Contains("msus_ccsr")) {
 					optionset = (OptionSetValue)e.Attributes["msus_ccsr"];

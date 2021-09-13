@@ -473,7 +473,7 @@ namespace CrmToJira {
 				// Set the patient harm to no by default
 				issue.fields.SetPatientHarmToNo();
 
-				// Debugging - Stipulate when the issue was detected.
+				// Stipulate when the issue was detected - For now it is a static value - later should add a field to the form and do it right.
 				issue.fields.SetWhenIssueOcurred("Before surgery");
 
 				if (e.Attributes.Contains("msus_ccsr")) {
@@ -486,11 +486,23 @@ namespace CrmToJira {
 					issue.fields.SetIssueType(GetOptionSetText("msus_jiraissue", "msus_issuetype", optionset.Value, Proxy));
 				}
 
+				// Complaint received via (added to Jira Sep 2021)
+				if (e.Attributes.Contains("msus_complaintreceivedvia")) {
+					optionset = (OptionSetValue)e.Attributes["msus_complaintreceivedvia"];
+					issue.fields.SetComplaintReceivedVia(GetOptionSetText("msus_jiraissue", "msus_complaintreceivedvia", optionset.Value, Proxy));
+				}
+
 				if (e.Attributes.Contains("msus_mdrreportable")) {
 					bool yes = (bool)e.Attributes["msus_mdrreportable"];
 					string val = "No";
 					if (yes) val = "Yes";
 					issue.fields.SetMDR(val);
+				}
+
+				// First aware date (added to Jira Sep 2021)
+				if (e.Attributes.Contains("msus_firstawaredate")) {
+					DateTime firstawaredate = (DateTime)e.Attributes["msus_firstawaredate"];
+					issue.fields.SetFirstAwareDate(firstawaredate);
 				}
 
 				if (issue.fields.GetProject().Equals("CC")) {
@@ -692,12 +704,25 @@ namespace CrmToJira {
 			}
 		}
 
-
+		/// <summary>
+		/// Calls the IsEqualTo method of the JiraIssue.Fields class.  This method iterates through 
+		/// each property to determine equality.
+		/// </summary>
+		/// <param name="jiraIssue"></param>
+		/// <param name="crmGuid"></param>
+		/// <returns></returns>
 		public bool CrmAndJiraAreEqual(string issuekey, string crmGuid) {
 			JiraIssue jira = GetIssue(issuekey);
 			return CrmAndJiraAreEqual(jira, crmGuid);
 		}
 
+		/// <summary>
+		/// Calls the IsEqualTo method of the JiraIssue.Fields class.  This method iterates through 
+		/// each property to determine equality.
+		/// </summary>
+		/// <param name="jiraIssue"></param>
+		/// <param name="crmGuid"></param>
+		/// <returns></returns>
 		public bool CrmAndJiraAreEqual(JiraIssue jiraIssue, string crmGuid) {
 			JiraIssue crmJira = MakeJiraIssueFromCrm(crmGuid);
 			bool isEqual = (crmJira.fields.IsEqualTo(jiraIssue));
@@ -1078,7 +1103,9 @@ namespace CrmToJira {
 				newRequest.Headers.Add("Authorization", "Basic " + base64Credentials);
 				newRequest.Accept = "application/json";
 
-				string json = JiraIssueStatus.GetResolvedJson(resolution);				
+				// Remove the .Replace("PPP replacement", "PPP replacement " method after Norway fixes the value in Jira
+				// string json = JiraIssueStatus.GetResolvedJson(resolution).Replace("PPP replacement", "PPP replacement ");
+				string json = JiraIssueStatus.GetResolvedJson(resolution);
 
 				// Write the message body
 				if (json != null) {
@@ -1400,11 +1427,24 @@ namespace CrmToJira {
 			return ! issue.fields.status.name.Equals("Closed");
 		}
 
+		/// <summary>
+		/// Determines if a Jira issue has been "Resolved" but not actually "Closed"
+		/// </summary>
+		/// <param name="issuekey">The issue to evaluate (e.g. SR-9095)</param>
+		/// <returns></returns>
 		public bool IssueResolvedButNotClosed(string issuekey) {
 			JiraIssue issue = GetIssueStatusAndResolution(issuekey);
 			return issue.fields.status.name.Equals("Resolved");
 		}
 
+		/// <summary>
+		/// Edits an existing comment in Jira.  Not thread safe!   A web 
+		/// request will be made!
+		/// </summary>
+		/// <param name="issuekey"></param>
+		/// <param name="msg"></param>
+		/// <param name="commentid"></param>
+		/// <returns></returns>
 		public bool EditCommentInJira(string issuekey, string msg, string commentid) {
 			StringBuilder sb = new StringBuilder();
 			sb.Append("{");
@@ -1432,6 +1472,14 @@ namespace CrmToJira {
 			} catch (Exception e) { return false; }
 		}
 
+		/// <summary>
+		/// Creates a comment on an issue in Jira.  Not thread safe!  A web request
+		/// will be made!
+		/// </summary>
+		/// <param name="issuekey"></param>
+		/// <param name="msg"></param>
+		/// <param name="credentials"></param>
+		/// <returns></returns>
 		public string CreateCommentInJira(string issuekey, string msg, JiraCredentials credentials) {
 			JiraCommentCreateResponse response = new JiraCommentCreateResponse();
 			var newRequest = (HttpWebRequest)WebRequest.Create(m_BaseUrl + issuekey + "/comment");
@@ -1637,6 +1685,12 @@ namespace CrmToJira {
 			}
 		}
 
+		/// <summary>
+		/// Attaches a file to a Jira issue.  Web request will be made.
+		/// </summary>
+		/// <param name="issuekey"></param>
+		/// <param name="note"></param>
+		/// <returns></returns>
 		public string CreateAttachmentInJira(string issuekey, Note note) {
 			try {
 				ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;

@@ -7,16 +7,25 @@ using System.Web;
 
 namespace CrmToJira {
 
+	/// <summary>
+	/// An object representing a Jira issue from the Atlassian api.
+	/// </summary>
 	public class JiraIssue {
 		public string expand { get; set; }
 		public string id { get; set; }
 		public string self { get; set; }
 		public string key { get; set; }
+		/// <summary>
+		/// All of the fields of a Jira issue as retrieved by the 
+		/// Atlassian API.
+		/// </summary>
 		public Fields fields { get; set; } = new Fields();
 	}
 
-
-
+	/// <summary>
+	/// All of the fields taken by deserializing an issue retrieved 
+	/// by the Atlassian API.  
+	/// </summary>
 	public class Fields {
 
 		/// <summary>
@@ -239,6 +248,21 @@ namespace CrmToJira {
 			customfield_10076.value = value;
 		}
 
+		// Added to Jira Sep 21
+		public string GetComplaintReceivedVia() {
+			try {
+				return customfield_13321.value;
+			} catch (Exception) {
+				return null;
+			}
+		}
+
+		// Added to Jira Sep 21
+		public void SetComplaintReceivedVia(string value) {
+			customfield_13321 = new Customfield13321();
+			customfield_13321.value = value;
+		}
+
 		public float GetUsedOnSerialNumber() {
 			return customfield_10274;
 		}
@@ -450,6 +474,15 @@ namespace CrmToJira {
 			customfield_10075 = val;
 		}
 
+		public string GetFirstAwareDate() {
+			return customfield_13320;
+		}
+
+		public void SetFirstAwareDate(DateTime value) {
+			string val = value.ToString("o");
+			customfield_13320 = val;
+		}
+
 		public string GetSystemType() {
 			try {
 				return customfield_10084.value;
@@ -483,6 +516,7 @@ namespace CrmToJira {
 		public object customfield_11120 { get; set; }
 		public Project project { get; set; }
 		public Customfield10076 customfield_10076 { get; set; }
+		public Customfield13321 customfield_13321 { get; set; } // Complaint received via (added Sep 21)
 		public object customfield_11121 { get; set; }
 		public List<object> fixVersions { get; set; }
 		public Customfield10077 customfield_10077 { get; set; }
@@ -497,7 +531,8 @@ namespace CrmToJira {
 		public DateTime lastViewed { get; set; }
 		public Watches watches { get; set; }
 		public DateTime created { get; set; }
-		public string customfield_10075 { get; set; }
+		public string customfield_10075 { get; set; } // Date of first use
+		public string customfield_13320 { get; set; } // First aware date (added Sep 21)
 		public string customfield_10140 { get; set; }
 		public object customfield_12121 { get; set; }
 		public object customfield_12120 { get; set; }
@@ -637,6 +672,13 @@ namespace CrmToJira {
 		public string id { get; set; }
 	}
 
+	// Complaint received via (Added to Jira Sep 2021)
+	public class Customfield13321 {
+		public string self { get; set; }
+		public string value { get; set; }
+		public string id { get; set; }
+	}
+
 	public class Child2 {
 		public string self { get; set; }
 		public string value { get; set; }
@@ -669,7 +711,15 @@ namespace CrmToJira {
 		public string id { get; set; }
 	}
 
+	// Date of first use
 	public class Customfield10075 {
+		public string self { get; set; }
+		public string value { get; set; }
+		public string id { get; set; }
+	}
+
+	// First aware date
+	public class Customfield13320 {
 		public string self { get; set; }
 		public string value { get; set; }
 		public string id { get; set; }
@@ -722,7 +772,7 @@ namespace CrmToJira {
         public string value { get; set; }
         public string id { get; set; }
         public bool disabled { get; set; }
-    }
+	}
 
 	public class StatusCategory {
 		public string self { get; set; }
